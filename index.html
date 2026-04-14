@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WarungPOS – Kasir Digital</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  /* ── DESIGN TOKENS ─────────────────────────── */
+  :root {
+    --amber:   #F59E0B;
+    --amber-d: #D97706;
+    --emerald: #10B981;
+    --emr-d:   #059669;
+    --slate:   #0F172A;
+    --slate-m: #1E293B;
+    --slate-l: #334155;
+    --muted:   #64748B;
+    --surface: #F8FAFC;
+    --white:   #FFFFFF;
+    --danger:  #EF4444;
+    --indigo:  #6366F1;
+    --font-sans: 'Plus Jakarta Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); background: var(--surface); color: var(--slate); }
+
+  /* ── SCROLLBAR ─────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #E2E8F0; }
+  ::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 3px; }
+
+  /* ── ANIMATIONS ─────────────────────────── */
+  @keyframes fadeIn  { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes slideUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulse2  { 0%,100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+  @keyframes spin    { to { transform:rotate(360deg); } }
+  @keyframes shake   { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-8px);} 40%,80%{transform:translateX(8px);} }
+
+  .fade-in  { animation: fadeIn .35s ease both; }
+  .slide-up { animation: slideUp .4s ease both; }
+  .shake    { animation: shake .4s ease; }
+
+  /* ── PAGES ─────────────────────────── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── NAV ─────────────────────────── */
+  .navbar {
+    background: var(--slate);
+    color: var(--white);
+    padding: 0 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .navbar .logo { font-weight: 800; font-size: 1.15rem; letter-spacing: -0.5px; display:flex;align-items:center;gap:.5rem; }
+  .navbar .logo span { color: var(--amber); }
+  .nav-links { display: flex; gap: .25rem; }
+  .nav-btn {
+    padding: .4rem .85rem;
+    border-radius: 8px;
+    font-size: .82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+    background: transparent;
+    color: #94A3B8;
+  }
+  .nav-btn:hover, .nav-btn.active { background: var(--slate-l); color: var(--white); }
+  .nav-btn.active { color: var(--amber); }
+
+  /* ── CARDS ─────────────────────────── */
+  .card {
+    background: var(--white);
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+    padding: 1.25rem;
+  }
+
+  /* ── BUTTONS ─────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    padding: .55rem 1.2rem;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    border: none;
+    font-family: var(--font-sans);
+  }
+  .btn-amber  { background: var(--amber);   color: var(--white); }
+  .btn-amber:hover  { background: var(--amber-d); transform: translateY(-1px); box-shadow:0 4px 12px rgba(245,158,11,.35); }
+  .btn-emerald{ background: var(--emerald); color: var(--white); }
+  .btn-emerald:hover{ background: var(--emr-d);   transform: translateY(-1px); box-shadow:0 4px 12px rgba(16,185,129,.35); }
+  .btn-danger { background: var(--danger);  color: var(--white); }
+  .btn-danger:hover { transform: translateY(-1px); box-shadow:0 4px 12px rgba(239,68,68,.35); }
+  .btn-ghost  { background: #E2E8F0; color: var(--slate-l); }
+  .btn-ghost:hover  { background: #CBD5E1; }
+  .btn-indigo { background: var(--indigo); color: var(--white); }
+  .btn-indigo:hover { transform: translateY(-1px); box-shadow:0 4px 12px rgba(99,102,241,.35); }
+  .btn-full   { width: 100%; }
+
+  /* ── INPUT ─────────────────────────── */
+  .input-field {
+    width: 100%;
+    padding: .6rem .875rem;
+    border: 2px solid #E2E8F0;
+    border-radius: 10px;
+    font-size: .875rem;
+    font-family: var(--font-sans);
+    transition: border-color .2s;
+    background: var(--white);
+  }
+  .input-field:focus { outline: none; border-color: var(--amber); }
+  label { font-size: .8rem; font-weight: 600; color: var(--muted); margin-bottom: .3rem; display:block; text-transform: uppercase; letter-spacing:.5px; }
+
+  /* ── BADGE ─────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 6px;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .3px;
+  }
+  .badge-aktif  { background:#D1FAE5; color:#065F46; }
+  .badge-nonaktif{ background:#FEE2E2; color:#991B1B; }
+
+  /* ── TOAST ─────────────────────────── */
+  #toast-container {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+  }
+  .toast {
+    padding: .75rem 1.25rem;
+    border-radius: 12px;
+    color: var(--white);
+    font-weight: 600;
+    font-size: .875rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,.2);
+    animation: slideUp .3s ease;
+    max-width: 300px;
+  }
+  .toast-ok      { background: var(--emerald); }
+  .toast-error   { background: var(--danger); }
+  .toast-info    { background: var(--indigo); }
+
+  /* ── SPINNER ─────────────────────────── */
+  .spinner {
+    width: 20px; height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+
+  /* ── MODAL ─────────────────────────── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,.6);
+    backdrop-filter: blur(4px);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--white);
+    border-radius: 18px;
+    padding: 1.75rem;
+    width: 100%;
+    max-width: 460px;
+    animation: slideUp .35s ease;
+    box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  }
+
+  /* ── KASIR LAYOUT ─────────────────────────── */
+  .kasir-grid {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1rem;
+    height: calc(100vh - 56px);
+  }
+  @media(max-width:768px){
+    .kasir-grid { grid-template-columns:1fr; height:auto; }
+    .kasir-cart { position:fixed; bottom:0; left:0; right:0; z-index:50; max-height:45vh; overflow-y:auto; border-radius:16px 16px 0 0; }
+    #kasir-produk-area { padding-bottom: 48vh; }
+  }
+
+  /* ── PRODUCT GRID ─────────────────────────── */
+  .produk-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+    gap: .75rem;
+  }
+  .produk-card {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all .2s;
+    border: 2px solid transparent;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    position: relative;
+    overflow: hidden;
+  }
+  .produk-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0;
+    height:3px;
+    background: linear-gradient(90deg, var(--amber), var(--emerald));
+    opacity:0;
+    transition: opacity .2s;
+  }
+  .produk-card:hover { border-color: var(--amber); transform:translateY(-2px); box-shadow:0 6px 20px rgba(245,158,11,.2); }
+  .produk-card:hover::before { opacity:1; }
+  .produk-card.nonaktif { opacity:.45; cursor:not-allowed; }
+  .produk-name { font-weight: 700; font-size: .88rem; color: var(--slate); margin-bottom:.25rem; line-height:1.3; }
+  .produk-kat  { font-size: .72rem; color: var(--muted); font-weight:500; }
+  .produk-harga{ font-family: var(--font-mono); font-size: .95rem; font-weight:700; color:var(--amber); margin-top:.5rem; }
+
+  /* ── CART ─────────────────────────── */
+  .cart-item {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .625rem 0;
+    border-bottom: 1px solid #F1F5F9;
+    animation: fadeIn .25s ease;
+  }
+  .qty-btn {
+    width:26px; height:26px;
+    border-radius:8px;
+    border: 2px solid #E2E8F0;
+    background:white;
+    font-size:1rem;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;
+    color:var(--slate-l);
+    transition: all .15s;
+    flex-shrink:0;
+  }
+  .qty-btn:hover { border-color:var(--amber); color:var(--amber); }
+  .qty-display {
+    font-family:var(--font-mono);
+    font-weight:700;
+    font-size:.9rem;
+    min-width:22px;
+    text-align:center;
+  }
+
+  /* ── PIN LOGIN ─────────────────────────── */
+  .pin-dot {
+    width:14px; height:14px;
+    border-radius:50%;
+    background:#E2E8F0;
+    transition: background .2s;
+  }
+  .pin-dot.filled { background:var(--amber); }
+  .pin-key {
+    width:60px; height:60px;
+    border-radius:14px;
+    border: 2px solid #E2E8F0;
+    font-size:1.25rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:all .2s;
+    background:white;
+    color:var(--slate);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);
+  }
+  .pin-key:hover { border-color:var(--amber); background:#FFF7ED; }
+  .pin-key:active { transform:scale(.95); }
+
+  /* ── NOTA PRINT ─────────────────────────── */
+  @media print {
+    body > *:not(#nota-modal) { display:none !important; }
+    #nota-modal { display:block !important; position:static; background:white; }
+    .modal-overlay { display:block !important; position:static; background:white; }
+    .modal-box { box-shadow:none; padding:0; max-width:58mm; margin:0; border-radius:0; }
+    .nota-actions { display:none !important; }
+    @page { margin:0; size:58mm auto; }
+  }
+  .nota-content { font-family: 'Courier New', monospace; font-size:11px; }
+  .nota-divider { border:none; border-top:1px dashed #999; margin:.4rem 0; }
+  .nota-row { display:flex; justify-content:space-between; }
+  .nota-total { font-weight:bold; font-size:13px; }
+
+  /* ── TABLE ─────────────────────────── */
+  .tbl { width:100%; border-collapse:collapse; font-size:.875rem; }
+  .tbl th { background:#F8FAFC; padding:.75rem 1rem; text-align:left; font-size:.75rem; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; border-bottom:2px solid #E2E8F0; }
+  .tbl td { padding:.75rem 1rem; border-bottom:1px solid #F1F5F9; vertical-align:middle; }
+  .tbl tr:hover td { background:#FAFAFA; }
+
+  /* ── SEARCH ─────────────────────────── */
+  .search-wrap { position:relative; }
+  .search-wrap svg { position:absolute; left:.75rem; top:50%; transform:translateY(-50%); pointer-events:none; }
+  .search-wrap input { padding-left:2.5rem; }
+
+  /* ── STATS CARD ─────────────────────────── */
+  .stat-card {
+    background:var(--white);
+    border-radius:14px;
+    padding:1.25rem 1.5rem;
+    border-left: 4px solid var(--amber);
+    box-shadow:0 1px 4px rgba(0,0,0,.06);
+  }
+
+  /* ── CATEGORY TABS ─────────────────────────── */
+  .cat-tab {
+    padding:.4rem 1rem;
+    border-radius:8px;
+    font-size:.8rem;
+    font-weight:600;
+    cursor:pointer;
+    border:2px solid #E2E8F0;
+    background:white;
+    color:var(--muted);
+    transition:all .2s;
+    white-space:nowrap;
+  }
+  .cat-tab:hover, .cat-tab.active { background:var(--amber); border-color:var(--amber); color:white; }
+
+  /* ── METODE BAYAR ─────────────────────────── */
+  .metode-btn {
+    flex:1;
+    padding:.65rem;
+    border-radius:10px;
+    font-weight:600;
+    font-size:.85rem;
+    cursor:pointer;
+    transition:all .2s;
+    border: 2px solid #E2E8F0;
+    background:white;
+    color:var(--slate-l);
+  }
+  .metode-btn.selected { border-color:var(--emerald); background:#ECFDF5; color:var(--emerald); }
+
+  /* ── LOADING OVERLAY ─────────────────────────── */
+  #loading-overlay {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(255,255,255,.85);
+    z-index:9998;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    gap:1rem;
+  }
+  #loading-overlay.show { display:flex; }
+  .loading-ring {
+    width:48px; height:48px;
+    border:4px solid #E2E8F0;
+    border-top-color:var(--amber);
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── LOADING OVERLAY ──────────────────────── -->
+<div id="loading-overlay">
+  <div class="loading-ring"></div>
+  <p style="font-weight:600;color:var(--muted)" id="loading-text">Memuat data…</p>
+</div>
+
+<!-- ── TOAST CONTAINER ──────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── NAVBAR ──────────────────────────────── -->
+<nav class="navbar">
+  <div class="logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="7" width="20" height="14" rx="3" fill="#F59E0B"/><path d="M8 7V5a4 4 0 0 1 8 0v2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="14" r="2" fill="#fff"/></svg>
+    Warung<span>POS</span>
+  </div>
+  <div class="nav-links">
+    <button class="nav-btn active" onclick="gotoPage('kasir')">🧾 Kasir</button>
+    <button class="nav-btn" onclick="gotoPage('admin')">⚙️ Admin</button>
+    <button class="nav-btn" onclick="gotoPage('laporan')">📊 Laporan</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE: KASIR                               -->
+<!-- ══════════════════════════════════════════ -->
+<div id="page-kasir" class="page active">
+  <div class="kasir-grid">
+
+    <!-- KIRI: Produk -->
+    <div id="kasir-produk-area" style="padding:1rem;overflow-y:auto;">
+      <!-- Search + Filter -->
+      <div style="display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap;">
+        <div class="search-wrap" style="flex:1;min-width:160px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="kasir-search" class="input-field" placeholder="Cari produk..." oninput="renderKasirProduk()"/>
+        </div>
+        <div id="kasir-cats" style="display:flex;gap:.4rem;overflow-x:auto;padding-bottom:2px;"></div>
+      </div>
+      <div id="kasir-produk-grid" class="produk-grid fade-in"></div>
+    </div>
+
+    <!-- KANAN: Cart -->
+    <div class="kasir-cart card" style="border-radius:0;display:flex;flex-direction:column;border-left:1px solid #E2E8F0;">
+      <div style="font-weight:800;font-size:1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;">
+        🛒 Pesanan
+        <span id="cart-count" style="background:var(--amber);color:white;font-size:.7rem;padding:.15rem .5rem;border-radius:20px;">0</span>
+      </div>
+
+      <div id="cart-items" style="flex:1;overflow-y:auto;min-height:100px;"></div>
+
+      <div style="border-top:2px solid #F1F5F9;padding-top:.875rem;margin-top:.5rem;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.35rem;font-size:.85rem;color:var(--muted);">
+          <span>Subtotal</span>
+          <span id="cart-subtotal" style="font-family:var(--font-mono);">Rp 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:1.05rem;margin-bottom:.75rem;">
+          <span>Total</span>
+          <span id="cart-total" style="font-family:var(--font-mono);color:var(--amber);">Rp 0</span>
+        </div>
+
+        <!-- Metode Bayar -->
+        <p style="font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.5px;">Metode Bayar</p>
+        <div style="display:flex;gap:.4rem;margin-bottom:.875rem;">
+          <button class="metode-btn selected" onclick="selectMetode(this,'Tunai')">💵 Tunai</button>
+          <button class="metode-btn" onclick="selectMetode(this,'QRIS')">📱 QRIS</button>
+          <button class="metode-btn" onclick="selectMetode(this,'Transfer')">🏦 Transfer</button>
+        </div>
+
+        <button class="btn btn-emerald btn-full" onclick="prosesTransaksi()" style="height:48px;font-size:1rem;">
+          Bayar &nbsp;→
+        </button>
+        <button class="btn btn-ghost btn-full" onclick="clearCart()" style="margin-top:.4rem;font-size:.8rem;">
+          🗑 Kosongkan Keranjang
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE: ADMIN                               -->
+<!-- ══════════════════════════════════════════ -->
+<div id="page-admin" class="page" style="padding:1.25rem;max-width:1000px;margin:0 auto;">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+    <div>
+      <h1 style="font-size:1.4rem;font-weight:800;">Manajemen Produk</h1>
+      <p style="color:var(--muted);font-size:.85rem;">Tambah, edit, atau hapus produk menu</p>
+    </div>
+    <button class="btn btn-amber" onclick="openModalProduk()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      Tambah Produk
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem;">
+    <div class="stat-card">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Total Produk</div>
+      <div id="stat-total" style="font-size:2rem;font-weight:800;font-family:var(--font-mono);color:var(--slate);">0</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--emerald);">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Aktif</div>
+      <div id="stat-aktif" style="font-size:2rem;font-weight:800;font-family:var(--font-mono);color:var(--emerald);">0</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--indigo);">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Kategori</div>
+      <div id="stat-kat" style="font-size:2rem;font-weight:800;font-family:var(--font-mono);color:var(--indigo);">0</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="padding:1rem 1.25rem;border-bottom:1px solid #F1F5F9;display:flex;gap:.75rem;flex-wrap:wrap;">
+      <div class="search-wrap" style="flex:1;min-width:160px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="admin-search" class="input-field" placeholder="Cari produk..." oninput="renderAdminTable()"/>
+      </div>
+      <button class="btn btn-ghost" onclick="loadProduk(true)" style="font-size:.8rem;">
+        ↺ Refresh
+      </button>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>ID</th><th>Nama</th><th>Kategori</th><th>Harga</th><th>Status</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="admin-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- PAGE: LAPORAN                             -->
+<!-- ══════════════════════════════════════════ -->
+<div id="page-laporan" class="page" style="padding:1.25rem;max-width:960px;margin:0 auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:.75rem;">
+    <div>
+      <h1 style="font-size:1.4rem;font-weight:800;">Laporan Transaksi</h1>
+      <p style="color:var(--muted);font-size:.85rem;">Riwayat penjualan harian</p>
+    </div>
+    <button class="btn btn-amber" onclick="loadLaporan()">↺ Refresh</button>
+  </div>
+
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem;">
+    <div class="stat-card">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Transaksi Hari Ini</div>
+      <div id="lap-jml" style="font-size:2rem;font-weight:800;font-family:var(--font-mono);">0</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--emerald);">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Omzet Hari Ini</div>
+      <div id="lap-omzet" style="font-size:1.5rem;font-weight:800;font-family:var(--font-mono);color:var(--emerald);">Rp 0</div>
+    </div>
+    <div class="stat-card" style="border-left-color:var(--indigo);">
+      <div style="font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Total Semua Transaksi</div>
+      <div id="lap-total-trx" style="font-size:2rem;font-weight:800;font-family:var(--font-mono);color:var(--indigo);">0</div>
+    </div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="overflow-x:auto;">
+      <table class="tbl">
+        <thead><tr><th>ID Transaksi</th><th>Tanggal</th><th>Jam</th><th>Total</th><th>Metode</th></tr></thead>
+        <tbody id="lap-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL: PIN LOGIN                          -->
+<!-- ══════════════════════════════════════════ -->
+<div id="modal-pin" class="modal-overlay open">
+  <div class="modal-box" style="max-width:340px;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:.5rem;">🔐</div>
+    <h2 style="font-weight:800;font-size:1.3rem;margin-bottom:.25rem;">Akses Admin</h2>
+    <p style="color:var(--muted);font-size:.85rem;margin-bottom:1.25rem;">Masukkan PIN 4 digit untuk melanjutkan</p>
+    <!-- PIN dots -->
+    <div style="display:flex;justify-content:center;gap:.6rem;margin-bottom:1.25rem;" id="pin-dots">
+      <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+    </div>
+    <!-- Keypad -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;max-width:220px;margin:0 auto;">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('C')" style="font-size:.85rem;">✕ Hapus</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key btn-amber" onclick="pinKey('OK')" style="font-size:.85rem;color:white;">✓ OK</button>
+    </div>
+    <p id="pin-error" style="color:var(--danger);font-size:.8rem;margin-top:.75rem;min-height:1.2em;font-weight:600;"></p>
+    <button class="btn btn-ghost" onclick="closePin()" style="margin-top:.75rem;font-size:.8rem;">Batal</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL: FORM PRODUK                        -->
+<!-- ══════════════════════════════════════════ -->
+<div id="modal-produk" class="modal-overlay">
+  <div class="modal-box">
+    <h2 id="modal-produk-title" style="font-weight:800;font-size:1.2rem;margin-bottom:1.25rem;">Tambah Produk</h2>
+    <div style="display:grid;gap:.875rem;">
+      <input type="hidden" id="fp-id"/>
+      <div>
+        <label>Nama Produk *</label>
+        <input type="text" id="fp-nama" class="input-field" placeholder="Contoh: Nasi Goreng Spesial"/>
+      </div>
+      <div>
+        <label>Kategori *</label>
+        <input type="text" id="fp-kat" class="input-field" placeholder="Contoh: Makanan / Minuman" list="kat-list"/>
+        <datalist id="kat-list"></datalist>
+      </div>
+      <div>
+        <label>Harga (Rp) *</label>
+        <input type="number" id="fp-harga" class="input-field" placeholder="25000" min="0"/>
+      </div>
+      <div>
+        <label>Status</label>
+        <select id="fp-status" class="input-field">
+          <option value="Aktif">✅ Aktif</option>
+          <option value="Nonaktif">❌ Nonaktif</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;margin-top:1.25rem;">
+      <button class="btn btn-ghost" onclick="closeModalProduk()" style="flex:1;">Batal</button>
+      <button class="btn btn-amber" id="btn-save-produk" onclick="saveProduk()" style="flex:2;">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- MODAL: NOTA                               -->
+<!-- ══════════════════════════════════════════ -->
+<div id="nota-modal" class="modal-overlay">
+  <div class="modal-box" style="max-width:340px;">
+    <div id="nota-content" class="nota-content"></div>
+    <div class="nota-actions" style="display:flex;gap:.5rem;margin-top:1rem;">
+      <button class="btn btn-ghost" onclick="closeNota()" style="flex:1;">Tutup</button>
+      <button class="btn btn-indigo" onclick="window.print()" style="flex:1;">🖨 Cetak</button>
+      <button class="btn btn-emerald" onclick="closeNota();clearCart();" style="flex:1;">✓ Selesai</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- CONFIG BANNER (ganti GAS_URL di sini)    -->
+<!-- ══════════════════════════════════════════ -->
+<div id="config-banner" style="display:none;position:fixed;top:56px;left:0;right:0;background:#FEF3C7;border-bottom:2px solid var(--amber);padding:.6rem 1rem;font-size:.82rem;font-weight:600;text-align:center;z-index:90;">
+  ⚠️ URL Google Apps Script belum dikonfigurasi. Edit variabel <code>GAS_URL</code> di bagian konfigurasi script.
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  KONFIGURASI — Ganti URL di bawah ini setelah deploy GAS
+// ═══════════════════════════════════════════════════════════
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxbUgUndfTYY0NzlAfIVJq8pWlzklMkbpRXTvk-TPbUQGwlN454jMyT8MWMobxNVAz4Lg/exec';
+
+// PIN Admin (ubah sesuai keinginan)
+const ADMIN_PIN = '1234';
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let produkData = [];
+let cart = [];
+let metodeBayar = 'Tunai';
+let pinInput = '';
+let adminUnlocked = false;
+let activeCat = 'Semua';
+let pendingPage = '';
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    document.getElementById('config-banner').style.display = 'block';
+  }
+  loadFromLocalStorage();
+  loadProduk();
+  document.getElementById('modal-pin').classList.remove('open');
+});
+
+// ═══════════════════════════════════════════════════════════
+//  LOCAL STORAGE
+// ═══════════════════════════════════════════════════════════
+function saveToLocalStorage() {
+  try {
+    localStorage.setItem('warungpos_produk', JSON.stringify(produkData));
+    localStorage.setItem('warungpos_cart', JSON.stringify(cart));
+  } catch(e) {}
+}
+
+function loadFromLocalStorage() {
+  try {
+    const p = localStorage.getItem('warungpos_produk');
+    const c = localStorage.getItem('warungpos_cart');
+    if (p) produkData = JSON.parse(p);
+    if (c) { cart = JSON.parse(c); updateCartUI(); }
+  } catch(e) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOADING & TOAST
+// ═══════════════════════════════════════════════════════════
+function showLoading(txt = 'Memuat data…') {
+  document.getElementById('loading-text').textContent = txt;
+  document.getElementById('loading-overlay').classList.add('show');
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.remove('show');
+}
+
+function toast(msg, type = 'ok') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  API CALLS
+// ═══════════════════════════════════════════════════════════
+async function apiGet(action) {
+  const res = await fetch(`${GAS_URL}?action=${action}`);
+  return res.json();
+}
+
+async function apiPost(body) {
+  const res = await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PRODUK
+// ═══════════════════════════════════════════════════════════
+async function loadProduk(forceRefresh = false) {
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    // Mode demo tanpa koneksi
+    if (produkData.length === 0) {
+      produkData = [
+        {ID:'P001',Nama:'Nasi Goreng Spesial',Kategori:'Makanan',Harga:25000,Status:'Aktif'},
+        {ID:'P002',Nama:'Mie Ayam',Kategori:'Makanan',Harga:20000,Status:'Aktif'},
+        {ID:'P003',Nama:'Es Teh Manis',Kategori:'Minuman',Harga:5000,Status:'Aktif'},
+        {ID:'P004',Nama:'Kopi Hitam',Kategori:'Minuman',Harga:8000,Status:'Aktif'},
+        {ID:'P005',Nama:'Ayam Bakar',Kategori:'Makanan',Harga:30000,Status:'Aktif'},
+        {ID:'P006',Nama:'Jus Jeruk',Kategori:'Minuman',Harga:12000,Status:'Aktif'},
+      ];
+      saveToLocalStorage();
+    }
+    renderKasirProduk();
+    renderAdminTable();
+    updateAdminStats();
+    return;
+  }
+
+  showLoading('Mengambil data produk…');
+  try {
+    const res = await apiGet('getProduk');
+    if (res.status === 'ok') {
+      produkData = res.data;
+      saveToLocalStorage();
+      renderKasirProduk();
+      renderAdminTable();
+      updateAdminStats();
+      if (forceRefresh) toast('Data produk diperbarui ✓');
+    }
+  } catch(e) {
+    toast('Gagal memuat dari server, menggunakan cache', 'error');
+    renderKasirProduk();
+    renderAdminTable();
+  } finally {
+    hideLoading();
+  }
+}
+
+// ── KASIR: Render Produk ──────────────
+function renderKasirProduk() {
+  const search = (document.getElementById('kasir-search')?.value || '').toLowerCase();
+  const filtered = produkData.filter(p => {
+    const matchCat = activeCat === 'Semua' || p.Kategori === activeCat;
+    const matchSearch = p.Nama.toLowerCase().includes(search) || p.Kategori.toLowerCase().includes(search);
+    return matchCat && matchSearch;
+  });
+
+  // Category tabs
+  const cats = ['Semua', ...new Set(produkData.map(p => p.Kategori))];
+  document.getElementById('kasir-cats').innerHTML = cats.map(c =>
+    `<button class="cat-tab ${c===activeCat?'active':''}" onclick="setActiveCat('${c}')">${c}</button>`
+  ).join('');
+
+  // Grid
+  const grid = document.getElementById('kasir-produk-grid');
+  grid.innerHTML = filtered.length === 0
+    ? `<div style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--muted);">Tidak ada produk ditemukan</div>`
+    : filtered.map(p => `
+      <div class="produk-card ${p.Status==='Nonaktif'?'nonaktif':''}"
+           onclick="${p.Status==='Aktif'?`addToCart('${p.ID}')`:''}" >
+        <div style="font-size:1.6rem;margin-bottom:.35rem;">${getCatEmoji(p.Kategori)}</div>
+        <div class="produk-name">${p.Nama}</div>
+        <div class="produk-kat">${p.Kategori}</div>
+        <div class="produk-harga">${formatRp(p.Harga)}</div>
+        ${p.Status==='Nonaktif'?`<div style="font-size:.7rem;color:var(--danger);font-weight:600;margin-top:.25rem;">Nonaktif</div>`:''}
+      </div>
+    `).join('');
+}
+
+function setActiveCat(cat) {
+  activeCat = cat;
+  renderKasirProduk();
+}
+
+function getCatEmoji(kat) {
+  const map = { Makanan:'🍽️', Minuman:'🥤', Snack:'🍿', Dessert:'🍮', Lainnya:'📦' };
+  return map[kat] || '🍴';
+}
+
+// ── ADMIN: Render Table ──────────────
+function renderAdminTable() {
+  const search = (document.getElementById('admin-search')?.value || '').toLowerCase();
+  const filtered = produkData.filter(p =>
+    p.Nama.toLowerCase().includes(search) || p.Kategori.toLowerCase().includes(search)
+  );
+
+  const tbody = document.getElementById('admin-tbody');
+  tbody.innerHTML = filtered.length === 0
+    ? `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--muted);">Tidak ada data</td></tr>`
+    : filtered.map(p => `
+      <tr>
+        <td><code style="font-size:.78rem;background:#F1F5F9;padding:.2rem .45rem;border-radius:5px;">${p.ID}</code></td>
+        <td style="font-weight:600;">${p.Nama}</td>
+        <td><span style="background:#F1F5F9;padding:.2rem .6rem;border-radius:6px;font-size:.8rem;">${p.Kategori}</span></td>
+        <td style="font-family:var(--font-mono);font-weight:600;">${formatRp(p.Harga)}</td>
+        <td><span class="badge badge-${p.Status==='Aktif'?'aktif':'nonaktif'}">${p.Status}</span></td>
+        <td>
+          <div style="display:flex;gap:.35rem;">
+            <button class="btn btn-ghost" onclick="editProduk('${p.ID}')" style="padding:.3rem .65rem;font-size:.78rem;">✏️ Edit</button>
+            <button class="btn btn-danger" onclick="hapusProduk('${p.ID}')" style="padding:.3rem .65rem;font-size:.78rem;">🗑</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+}
+
+function updateAdminStats() {
+  document.getElementById('stat-total').textContent = produkData.length;
+  document.getElementById('stat-aktif').textContent = produkData.filter(p=>p.Status==='Aktif').length;
+  document.getElementById('stat-kat').textContent = new Set(produkData.map(p=>p.Kategori)).size;
+}
+
+// ── CRUD Produk ──────────────
+function openModalProduk(id = null) {
+  document.getElementById('fp-id').value = '';
+  document.getElementById('fp-nama').value = '';
+  document.getElementById('fp-kat').value = '';
+  document.getElementById('fp-harga').value = '';
+  document.getElementById('fp-status').value = 'Aktif';
+  document.getElementById('modal-produk-title').textContent = 'Tambah Produk Baru';
+
+  // Update datalist kategori
+  const cats = [...new Set(produkData.map(p=>p.Kategori))];
+  document.getElementById('kat-list').innerHTML = cats.map(c=>`<option value="${c}"/>`).join('');
+
+  if (id) {
+    const p = produkData.find(x => x.ID === id);
+    if (p) {
+      document.getElementById('fp-id').value = p.ID;
+      document.getElementById('fp-nama').value = p.Nama;
+      document.getElementById('fp-kat').value = p.Kategori;
+      document.getElementById('fp-harga').value = p.Harga;
+      document.getElementById('fp-status').value = p.Status;
+      document.getElementById('modal-produk-title').textContent = 'Edit Produk';
+    }
+  }
+  document.getElementById('modal-produk').classList.add('open');
+}
+
+function closeModalProduk() {
+  document.getElementById('modal-produk').classList.remove('open');
+}
+
+function editProduk(id) { openModalProduk(id); }
+
+async function saveProduk() {
+  const id    = document.getElementById('fp-id').value;
+  const nama  = document.getElementById('fp-nama').value.trim();
+  const kat   = document.getElementById('fp-kat').value.trim();
+  const harga = parseInt(document.getElementById('fp-harga').value);
+  const status= document.getElementById('fp-status').value;
+
+  if (!nama || !kat || isNaN(harga)) {
+    toast('Isi semua field dengan benar', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-save-produk');
+  btn.innerHTML = '<div class="spinner"></div>';
+  btn.disabled = true;
+
+  const data = { ID: id, Nama: nama, Kategori: kat, Harga: harga, Status: status };
+  const action = id ? 'editProduk' : 'tambahProduk';
+
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    // Demo mode
+    if (id) {
+      const idx = produkData.findIndex(p => p.ID === id);
+      if (idx >= 0) produkData[idx] = data;
+    } else {
+      data.ID = 'P' + String(produkData.length + 1).padStart(3,'0');
+      produkData.push(data);
+    }
+    saveToLocalStorage();
+    renderKasirProduk();
+    renderAdminTable();
+    updateAdminStats();
+    toast(id ? 'Produk diperbarui ✓' : 'Produk ditambahkan ✓');
+    closeModalProduk();
+    btn.innerHTML = '💾 Simpan';
+    btn.disabled = false;
+    return;
+  }
+
+  try {
+    const res = await apiPost({ action, data });
+    if (res.status === 'ok') {
+      toast(res.message + ' ✓');
+      closeModalProduk();
+      await loadProduk();
+    } else {
+      toast(res.message, 'error');
+    }
+  } catch(e) {
+    toast('Gagal menyimpan: ' + e.message, 'error');
+  } finally {
+    btn.innerHTML = '💾 Simpan';
+    btn.disabled = false;
+  }
+}
+
+async function hapusProduk(id) {
+  const p = produkData.find(x=>x.ID===id);
+  if (!confirm(`Hapus produk "${p?.Nama}"?`)) return;
+
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    produkData = produkData.filter(x=>x.ID!==id);
+    saveToLocalStorage();
+    renderKasirProduk();
+    renderAdminTable();
+    updateAdminStats();
+    toast('Produk dihapus ✓');
+    return;
+  }
+
+  showLoading('Menghapus produk…');
+  try {
+    const res = await apiPost({ action:'hapusProduk', id });
+    if (res.status === 'ok') {
+      toast('Produk dihapus ✓');
+      await loadProduk();
+    } else toast(res.message, 'error');
+  } catch(e) {
+    toast('Gagal menghapus', 'error');
+  } finally { hideLoading(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CART
+// ═══════════════════════════════════════════════════════════
+function addToCart(produkId) {
+  const p = produkData.find(x=>x.ID===produkId);
+  if (!p || p.Status==='Nonaktif') return;
+
+  const existing = cart.find(c=>c.id===produkId);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ id:produkId, nama:p.Nama, harga:p.Harga, qty:1 });
+  }
+  saveToLocalStorage();
+  updateCartUI();
+
+  // Flash effect
+  const cards = document.querySelectorAll('.produk-card');
+  cards.forEach(c => {
+    if (c.onclick && c.onclick.toString().includes(produkId)) {
+      c.style.transform = 'scale(1.05)';
+      setTimeout(()=>c.style.transform='',150);
+    }
+  });
+}
+
+function updateCartUI() {
+  const items = document.getElementById('cart-items');
+  const count = cart.reduce((s,c)=>s+c.qty, 0);
+  const total = cart.reduce((s,c)=>s+c.qty*c.harga, 0);
+
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-subtotal').textContent = formatRp(total);
+  document.getElementById('cart-total').textContent = formatRp(total);
+
+  if (cart.length === 0) {
+    items.innerHTML = `<div style="text-align:center;padding:2rem 1rem;color:#CBD5E1;">
+      <div style="font-size:2.5rem;margin-bottom:.5rem;">🛒</div>
+      <div style="font-size:.85rem;font-weight:600;">Keranjang kosong</div>
+      <div style="font-size:.75rem;color:var(--muted);">Tap produk untuk menambah</div>
+    </div>`;
+    return;
+  }
+
+  items.innerHTML = cart.map(c => `
+    <div class="cart-item">
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${c.nama}</div>
+        <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-mono);">${formatRp(c.harga)}</div>
+      </div>
+      <button class="qty-btn" onclick="changeQty('${c.id}',-1)">−</button>
+      <span class="qty-display">${c.qty}</span>
+      <button class="qty-btn" onclick="changeQty('${c.id}',1)">+</button>
+      <div style="font-family:var(--font-mono);font-size:.85rem;font-weight:700;min-width:70px;text-align:right;">${formatRp(c.qty*c.harga)}</div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta) {
+  const item = cart.find(c=>c.id===id);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) cart = cart.filter(c=>c.id!==id);
+  saveToLocalStorage();
+  updateCartUI();
+}
+
+function clearCart() {
+  if (cart.length > 0 && !confirm('Kosongkan keranjang?')) return;
+  cart = [];
+  saveToLocalStorage();
+  updateCartUI();
+}
+
+function selectMetode(btn, metode) {
+  metodeBayar = metode;
+  document.querySelectorAll('.metode-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TRANSAKSI
+// ═══════════════════════════════════════════════════════════
+async function prosesTransaksi() {
+  if (cart.length === 0) { toast('Keranjang masih kosong!', 'error'); return; }
+
+  const total = cart.reduce((s,c)=>s+c.qty*c.harga, 0);
+  const detail = cart.map(c=>({ Nama_Produk:c.nama, Qty:c.qty, Subtotal:c.qty*c.harga }));
+  const transaksi = { Total_Bayar:total, Metode_Bayar:metodeBayar };
+
+  let idTransaksi;
+
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    // Demo mode
+    const now = new Date();
+    idTransaksi = 'TRX' + now.toISOString().replace(/\D/g,'').slice(0,14);
+    toast('Transaksi berhasil (mode demo) ✓');
+  } else {
+    showLoading('Memproses transaksi…');
+    try {
+      const res = await apiPost({ action:'simpanTransaksi', transaksi, detail });
+      if (res.status !== 'ok') { toast(res.message,'error'); hideLoading(); return; }
+      idTransaksi = res.id;
+      toast('Transaksi berhasil disimpan ✓');
+    } catch(e) {
+      toast('Gagal menyimpan transaksi','error');
+      hideLoading();
+      return;
+    } finally { hideLoading(); }
+  }
+
+  showNota(idTransaksi, transaksi, detail, total);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NOTA
+// ═══════════════════════════════════════════════════════════
+function showNota(idTrx, trx, detail, total) {
+  const now = new Date();
+  const tgl = now.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+  const jam = now.toLocaleTimeString('id-ID');
+
+  const itemRows = detail.map(d =>
+    `<div class="nota-row"><span>${d.Nama_Produk} x${d.Qty}</span><span>${formatRp(d.Subtotal)}</span></div>`
+  ).join('');
+
+  document.getElementById('nota-content').innerHTML = `
+    <div style="text-align:center;margin-bottom:.5rem;">
+      <div style="font-weight:bold;font-size:14px;">🍽️ WARUNG POS</div>
+      <div style="font-size:10px;">Kasir Digital</div>
+    </div>
+    <hr class="nota-divider"/>
+    <div class="nota-row"><span>No.</span><span style="font-size:9px;">${idTrx}</span></div>
+    <div class="nota-row"><span>Tgl</span><span>${tgl}</span></div>
+    <div class="nota-row"><span>Jam</span><span>${jam}</span></div>
+    <div class="nota-row"><span>Metode</span><span>${trx.Metode_Bayar}</span></div>
+    <hr class="nota-divider"/>
+    ${itemRows}
+    <hr class="nota-divider"/>
+    <div class="nota-row nota-total"><span>TOTAL</span><span>${formatRp(total)}</span></div>
+    <hr class="nota-divider"/>
+    <div style="text-align:center;font-size:10px;margin-top:.4rem;">
+      Terima kasih sudah berkunjung!<br/>Selamat makan 😊
+    </div>
+  `;
+  document.getElementById('nota-modal').classList.add('open');
+}
+
+function closeNota() {
+  document.getElementById('nota-modal').classList.remove('open');
+  cart = [];
+  saveToLocalStorage();
+  updateCartUI();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LAPORAN
+// ═══════════════════════════════════════════════════════════
+async function loadLaporan() {
+  if (GAS_URL === 'GANTI_DENGAN_URL_WEB_APP_GAS_ANDA') {
+    document.getElementById('lap-tbody').innerHTML =
+      `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Mode demo – hubungkan ke Google Sheets untuk melihat laporan</td></tr>`;
+    return;
+  }
+
+  showLoading('Memuat laporan…');
+  try {
+    const res = await apiGet('getTransaksi');
+    if (res.status !== 'ok') { toast('Gagal memuat laporan','error'); return; }
+
+    const today = new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'}).replace(/\//g,'/');
+    const todayTrx = res.transaksi.filter(t => t.Tanggal === today);
+    const omzetHariIni = todayTrx.reduce((s,t)=>s+Number(t.Total_Bayar),0);
+
+    document.getElementById('lap-jml').textContent = todayTrx.length;
+    document.getElementById('lap-omzet').textContent = formatRp(omzetHariIni);
+    document.getElementById('lap-total-trx').textContent = res.transaksi.length;
+
+    const tbody = document.getElementById('lap-tbody');
+    tbody.innerHTML = res.transaksi.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--muted);">Belum ada transaksi</td></tr>`
+      : [...res.transaksi].reverse().map(t=>`
+        <tr>
+          <td><code style="font-size:.75rem;background:#F1F5F9;padding:.2rem .4rem;border-radius:4px;">${t.ID_Transaksi}</code></td>
+          <td>${t.Tanggal}</td>
+          <td>${t.Jam}</td>
+          <td style="font-family:var(--font-mono);font-weight:600;color:var(--emerald);">${formatRp(t.Total_Bayar)}</td>
+          <td><span style="background:#F1F5F9;padding:.2rem .5rem;border-radius:6px;font-size:.8rem;">${t.Metode_Bayar}</span></td>
+        </tr>
+      `).join('');
+  } catch(e) {
+    toast('Gagal memuat laporan','error');
+  } finally { hideLoading(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PIN LOGIN
+// ═══════════════════════════════════════════════════════════
+function pinKey(k) {
+  const err = document.getElementById('pin-error');
+  const dots = document.querySelectorAll('.pin-dot');
+
+  if (k === 'C') {
+    pinInput = pinInput.slice(0,-1);
+  } else if (k === 'OK') {
+    if (pinInput === ADMIN_PIN) {
+      adminUnlocked = true;
+      document.getElementById('modal-pin').classList.remove('open');
+      gotoPage(pendingPage, true);
+      pinInput = '';
+      err.textContent = '';
+    } else {
+      err.textContent = '❌ PIN salah. Coba lagi.';
+      const box = document.getElementById('modal-pin').querySelector('.modal-box');
+      box.classList.add('shake');
+      setTimeout(()=>box.classList.remove('shake'),400);
+      pinInput = '';
+    }
+  } else if (pinInput.length < 4) {
+    pinInput += k;
+  }
+
+  dots.forEach((d,i)=>d.classList.toggle('filled', i < pinInput.length));
+}
+
+function closePin() {
+  document.getElementById('modal-pin').classList.remove('open');
+  pinInput = '';
+  document.getElementById('pin-error').textContent = '';
+  document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('filled'));
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGASI
+// ═══════════════════════════════════════════════════════════
+function gotoPage(page, bypass = false) {
+  if ((page === 'admin' || page === 'laporan') && !adminUnlocked && !bypass) {
+    pendingPage = page;
+    pinInput = '';
+    document.getElementById('pin-error').textContent = '';
+    document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('filled'));
+    document.getElementById('modal-pin').classList.add('open');
+    return;
+  }
+
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(`page-${page}`).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    if (b.textContent.toLowerCase().includes(page.slice(0,3))) b.classList.add('active');
+  });
+
+  if (page === 'admin') { renderAdminTable(); updateAdminStats(); }
+  if (page === 'laporan') loadLaporan();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════════════════
+function formatRp(n) {
+  return 'Rp ' + Number(n).toLocaleString('id-ID');
+}
+</script>
+</body>
+</html>
